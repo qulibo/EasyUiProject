@@ -1,0 +1,322 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <title>layout.html</title>
+	
+    <meta http-equiv="keywords" content="keyword1,keyword2,keyword3">
+    <meta http-equiv="description" content="this is my page">
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="themes/icon.css">
+    <!--<link rel="stylesheet" type="text/css" href="./styles.css">-->
+	<style type="text/css">
+	   body{
+	   	 font-size: 14px;
+	   }
+	</style>
+	<script type="text/javascript" src="jquery.min.js"></script>
+	<script type="text/javascript" src="jquery.easyui.min.js"></script>
+	<script type="text/javascript">
+	
+		 function urlClick(title, url) {
+			//exists方法 判断title='学生管理'的面板是否存在
+			var ifExist = $("#myTabs").tabs("exists", title);
+			if (!ifExist) {
+				//控件对象。控件名（'方法名'， 参数）
+				$("#myTabs").tabs("add",//添加一个新选项卡面板，选项参数是一个配置对象
+					{
+						title:title,//标题
+						closable:true,//是否可关闭
+						//添加内容     iframe 动态加载网页
+						content:'<iframe frameborder=0 width="100%" height="100%" scrolling="no"  src="'+url+'"></iframe>'
+					}
+				);
+			}
+			$("#myTabs").tabs("select", title);
+		}
+		
+	
+    	 function sexFormatter(value,row,index){
+          if(value==0) {
+          	return "男"
+          } else {
+          	return "女"
+          } 
+        }
+    	
+    	function queryForm(){
+    	  var id = null;
+    	   if($("#tt").tree('getSelected')!=null) {
+    	   	 id = $("#tt").tree('getSelected').id;
+    	   }
+          var ename=$("#empNameId").textbox('getValue');
+          // ajax=queryFoodList?foodname=foodname的值
+          //easyui所有的方法的调用 
+          //控件对象.控件名称('方法名','方法参数')
+          $('#dg').datagrid('load',{
+			ename: ename,
+			deptid: id
+		  });
+        }
+        
+        function submitAddForm(){
+        	$('#addf').form('submit', {
+				url:'emp',
+				success: function(msg){
+				    msg=JSON.parse(msg);
+					if(msg.code==1){
+	                   $.messager.alert('提示消息','添加成功');  
+	                   queryForm();
+	                   $('#add').window('close');
+	                }else{
+	                  $.messager.alert('错误消息',msg.message);
+	                }
+	                clearAddForm();
+	            }
+			});
+        	
+        }
+        
+        
+        
+        
+        function submitUpdateForm(){
+       		
+            var selectedRow=$("#dg").datagrid("getSelected");
+
+        	$('#ff').form('submit', {
+				url:'emp/'+selectedRow.id,
+				success: function(msg){
+				    msg=JSON.parse(msg);
+					if(msg.code==1){
+	                   $.messager.alert('提示消息','修改成功');  
+	                   queryForm();
+	                   $("#w").window('close');
+	                }else{
+	                  $.messager.alert('错误消息',msg.message);
+	                }
+				}
+			});
+        	
+        }
+        function clearForm(){
+            var selectedRow=$("#dg").datagrid("getSelected");
+			$('#ff').form('load',selectedRow);
+        	
+        }
+        
+        function clearAddForm(){
+           	$('#addf').form('clear');
+        }
+        
+           
+        $(function(){
+           //设置data-options
+           $("#dg").datagrid({
+               rownumbers:true,
+               toolbar:[
+               {
+			      iconCls: 'icon-add',
+			      text:'新增',
+			      onClick:function(){
+			      	$("#add").window('open');
+			      }
+				},{
+				  iconCls: 'icon-edit',
+				  text:'修改',
+				  onClick:function(){
+				      var selectedRow=$("#dg").datagrid("getSelected");
+			          if(selectedRow==null){
+			            $.messager.alert('提示消息','请选择一行数据');
+			            return;
+			          }
+			          $("#w").window('open');
+			          $('#ff').form('load',selectedRow);
+			  
+			      } 
+				},{
+				  iconCls: 'icon-remove',
+				  text:'删除',
+				  onClick:function(){
+			          //获取当前选择中的行 
+			         var selectedRow=$("#dg").datagrid("getSelected");
+			         if(selectedRow==null){
+			           $.messager.alert('提示消息','请选择一行数据');
+			           return;
+			         }
+			         //获取选中行的foodid
+			         var id=selectedRow.id;  
+					 
+			         //发起ajax到后台去删除数据
+			         $.ajax({
+			            url:'emp/'+id,
+			            method:'POST',
+			            dataType:'json',
+			            data:'_method=delete',
+			            success:function(msg){
+			               if(msg.code==1){
+			                   $.messager.alert('提示消息','删除成功');  
+			                   queryForm();
+			               }else{
+			                  $.messager.alert('错误消息',msg.message);
+			               }
+			            
+			            }
+			         });
+			          
+			      }
+				}
+			  ]
+           
+           })
+        })
+        
+         $(function(){
+	         $("#tt").tree({
+	            onSelect:function(node){
+	            	var id=node.id;
+	            	$("#dg").datagrid("load",{
+	            	  deptid:id
+	            	});
+	            }
+	         
+	         })
+
+       })
+      function getid() {
+      	var deptid = $("#tt").tree("getselected").id;
+      	alert(deptid);
+      	return deptid;
+      }
+    </script>
+  </head>
+  
+  <body style="padding:1px;margin:1px">
+    <div class="easyui-layout" style="width:100%;height:100%;margin:0px">
+        <!-- 北部 只能设置高度  一般不会设置宽度 -->
+		<div data-options="region:'north'"  style="height:15%;background-image: url(bd_log.jpg);">
+		   <div style="height:85%">
+		   </div>
+		   <div style="text-align: right;width:75%;"><a href=""><font size="3" color="blue">安全退出</font></a></div>
+		</div>
+		<div data-options="region:'west',split:true" title="导航菜单" style="width:18%;">
+		   <div class="easyui-accordion" style="width:500px;height:300px;">
+			<div title="权限管理"  style="overflow:auto;padding:10px;">
+				<a href="javascript:urlClick('员工管理', 'employee.html')" style="text-decoration: none;"><img alt="" src="themes/icons/man.png">用户管理 <br/></a>
+				<a href="javascript:urlClick('菜品管理', 'myCrud.html')"  style="text-decoration: none;"><img alt="" src="themes/icons/search.png" style="margin-top:5px">菜品管理<br/></a>
+				<a href="javascript:urlClick('人员管理', 'tree.html')"  style="text-decoration: none;"><img alt="" src="themes/icons/search.png" style="margin-top:5px">人员管理<br/></a>
+			</div>
+			<div data-options="region:'west',split:true" title="部门信息" style="width:15%">
+		    	<ul id="tt" class="easyui-tree" data-options="url:'queryDept'">   </ul>  
+			</div>
+		   </div>
+		</div>
+		<div data-options="region:'center',iconCls:'icon-ok'">
+		  <div id="myTabs" class="easyui-tabs" style="width:100%;height:100%">
+		     <div title="欢迎界面" style="padding:10px" >
+		     	<div>
+			     	员工姓名：<input id="empNameId" class="easyui-textbox" type="text" name="eName" data-options="required:false"></input>
+				  	<a href="javascript:void(0)" class="easyui-linkbutton" style="width:50px" onclick="queryForm()">查询</a>
+			  	</div>
+			  	<div>
+					<table id="dg" class="easyui-datagrid" title="Basic DataGrid" style="width:700px;height:400px"
+					data-options="singleSelect:false,collapsible:false,url:'queryEmpByName',method:'get',pagination:true">
+						<thead>
+							<tr>
+								<th data-options="field:'id',width:80">员工编号</th>
+								<th data-options="field:'ename',width:100">员工姓名</th>
+								<th data-options="field:'sex',width:80, formatter:sexFormatter">性别</th>
+								<th data-options="field:'age',width:80">年龄</th>
+								<th data-options="field:'sal',width:80">工资</th>
+								<th data-options="field:'post',width:80">职位</th>
+							</tr>
+						</thead>
+					</table>
+				</div>
+				
+				<div id="w" class="easyui-window" title="修改员工信息" data-options="iconCls:'icon-edit',closed:true" style="width:330px;height:300px;padding:5px;">
+					<div class="easyui-layout" data-options="fit:true">
+						<form id="ff" method="post">
+						<input type="hidden" name="_method" value="put">
+				    	<table cellpadding="5">
+				    		<tr>
+				    			<td>员工姓名:</td>
+				    			<td><input class="easyui-textbox" type="text" name="ename" data-options="required:true"></input></td>
+				    		</tr>
+				    		<tr>
+				    			<td>性别:</td>
+				    			<td>
+			                        <select class="easyui-combobox" name="sex" style="width:170px">
+			                        <option value="0">男</option>
+			                        <option value="1">女</option>
+			                        </select>
+								</td>
+				    		</tr>
+				    		<tr>
+				    			<td>年龄:</td>
+				    			<td><input class="easyui-textbox" type="text" name="age" data-options="required:true"></input></td>
+				    		</tr>
+				    		<tr>
+				    			<td>工资:</td>
+				    			<td><input class="easyui-textbox" type="text" name="sal" data-options="required:true"></input></td>
+				    		</tr>
+				    		<tr>
+				    			<td>职位:</td>
+				    			<td><input class="easyui-textbox" type="text" name="post" data-options="required:true"></input></td>
+				    		</tr>
+				    		
+				    	</table>
+				    </form>
+				     <div style="text-align:center;padding:5px">
+				    	<a href="javascript:void(0)" class="easyui-linkbutton" onclick="submitUpdateForm()">保存</a>
+				    	<a href="javascript:void(0)" class="easyui-linkbutton" onclick="clearForm()">重置</a>
+				    </div>
+					</div>
+				</div>
+				
+				<div id="add" class="easyui-window" title="新增员工信息" data-options="iconCls:'icon-add',closed:true" style="width:330px;height:300px;padding:5px;">
+					<div class="easyui-layout" data-options="fit:true">
+						<form id="addf" method="post">
+				    	<table cellpadding="5">
+				    		<tr>
+				    			<td>员工姓名:</td>
+				    			<td><input class="easyui-textbox" type="text" name="ename" data-options="required:true"></input></td>
+				    		</tr>
+				    		<tr>
+				    			<td>性别:</td>
+				    			<td>
+			                        <select class="easyui-combobox" name="sex" style="width:170px">
+			                        <option value="0">男</option>
+			                        <option value="1">女</option>
+			                        </select>
+								</td>
+				    		</tr>
+				    		<tr>
+				    			<td>年龄:</td>
+				    			<td><input class="easyui-textbox" type="text" name="age" data-options="required:true"></input></td>
+				    		</tr>
+				    		<tr>
+				    			<td>工资:</td>
+				    			<td><input class="easyui-textbox" type="text" name="sal" data-options="required:true"></input></td>
+				    		</tr>
+				    		<tr>
+				    			<td>职位:</td>
+				    			<td><input class="easyui-textbox" type="text" name="post" data-options="required:true"></input></td>
+				    		</tr>
+				    		
+				    		
+				    	</table>
+				    </form>
+				     <div style="text-align:center;padding:5px">
+				    	<a href="javascript:void(0)" class="easyui-linkbutton" onclick="submitAddForm()">添加</a>
+				    	<a href="javascript:void(0)" class="easyui-linkbutton" onclick="clearAddForm()">重置</a>
+				    </div>
+					</div>
+				</div>
+				
+		     </div>
+		  </div>
+		</div>
+	</div>
+  </body>
+</html>
